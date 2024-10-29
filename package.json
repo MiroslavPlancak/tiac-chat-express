@@ -1,12 +1,23 @@
 {
+  "name": "tiac-chat",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "build": "tsc",
+    "dev": "ts-node src/index.ts"
+  },
   "dependencies": {
-    "express": "^4.21.1"
+    "express": "^4.21.1",
+    "tsx": "^4.19.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/mssql": "^9.1.5",
     "@types/node": "^22.8.2",
     "mssql": "^11.0.1",
+    "nodemon": "^3.1.7",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
   }
