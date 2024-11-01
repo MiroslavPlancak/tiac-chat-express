@@ -18,7 +18,7 @@ export const getUsers = async (req: express.Request, res: express.Response) => {
 }
 /**
  * Get a specific {@link models.User} object by unique string identifier.
- * @param {string} Id - The unique identifier of the user to retrieve.
+ * @param {string} id - The unique identifier of the user to retrieve.
  * @returns {Promise<void>} - Sends the user data as JSON or an error response.
  */
 export const getUserById = async (req: express.Request, res: express.Response): Promise<void> => {
@@ -28,10 +28,10 @@ export const getUserById = async (req: express.Request, res: express.Response): 
         const request = pool.request()  // request object
 
         // input parameter
-        request.input('Id', id)
+        request.input('id', id)
 
 
-        const result = await request.query('SELECT * FROM Users WHERE Id = @Id')
+        const result = await request.query('SELECT * FROM Users WHERE id = @id')
         const user: models.User | undefined = result.recordset[0]
 
         if (result.recordset.length === 0) {

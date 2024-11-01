@@ -9,11 +9,16 @@
     "dev": "ts-node src/index.ts"
   },
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "express": "^4.21.1",
-    "tsx": "^4.19.2"
+    "jsonwebtoken": "^9.0.2",
+    "tsx": "^4.19.2",
+    "uuid": "^11.0.2"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
     "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.7",
     "@types/mssql": "^9.1.5",
     "@types/node": "^22.8.2",
     "mssql": "^11.0.1",
