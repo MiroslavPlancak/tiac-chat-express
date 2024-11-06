@@ -45,6 +45,35 @@ export const getMessageById = async (req: express.Request, res: express.Response
     }
 }
 /**
+ * Get a specific {@link models.Message} object/s by unique string identifier of {@link models.Conversation.id}.
+ * @param {string} id - The unique identifier of the Message to retrieve.
+ * @returns {Promise<void>} - Sends the Message data as JSON or an error response.
+ */
+export const getMessagesByConversationId = async (req: express.Request, res: express.Response): Promise<void> => {
+    const { id } = req.params
+    try {
+        const pool = await db.connectToDatabase()
+        const request = pool.request()  // request object
+
+        // input parameter
+        request.input('id', id)
+
+
+        const result = await request.query('SELECT * FROM Messages WHERE conversationId = @id')
+        const message: models.Message[] | []= result.recordset
+        
+        if (result.recordset.length === 0) {
+             res.json([])
+             return;
+        }
+
+        res.json(message)
+    } catch (err) {
+        console.error('Error retrieving Message:', err)
+        res.status(500).json({ message: 'Error retrieving Message' })
+    }
+}
+/**
  * Create a new {@link models.Message} object via a POST request.
  * 
  * @param {express.Request} req - The request object containing the Message data.

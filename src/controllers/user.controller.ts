@@ -10,6 +10,7 @@ export const getUsers = async (req: express.Request, res: express.Response) => {
         const pool = await db.connectToDatabase() // request object
         const result = await pool.query('SELECT * FROM Users')
         const users: models.User[] = result.recordset
+        //console.log(users)
         res.json(users)
     } catch (err) {
         console.error('Error retrieving users:', err)
