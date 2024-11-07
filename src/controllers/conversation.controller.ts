@@ -35,7 +35,7 @@ export const getConversationById = async (req: express.Request, res: express.Res
         const conversation: models.Conversation | undefined = result.recordset[0]
 
         if (result.recordset.length === 0) {
-             res.status(404).json({ message: 'Conversation not found' })
+            res.status(404).json({ message: 'Conversation not found' })
         }
 
         res.json(conversation)
@@ -52,14 +52,40 @@ export const getConversationById = async (req: express.Request, res: express.Res
  * @returns {Promise<void>} - A Promise that resolves when the user is created successfully or an error response is returned.
  */
 export const createConversation = async (req: express.Request, res: express.Response): Promise<void> => {
-    const newConversation = req.body
+    const newConvPayload = req.body
+    console.log(`second participant id is:`, newConvPayload.participantIds[1])
     try {
         const pool = await db.connectToDatabase()
-        const result = await pool.request()
-            .input('Name', newConversation.name)
+
+        // Find user object 
+        const findUser = await pool.request()
+            .input('Id', newConvPayload.participantIds[1])
+            .query('SELECT * FROM Users WHERE Id =@id ')
+        console.log(`findUser`, findUser.recordset)
+        if (!findUser.recordset.length) {
+            throw new Error('Participant not found.')
+        }
+        //Assign the name of the conversation
+        //based on the first participant added
+        const conversationName = findUser.recordset[0].name;
+        const createConv = await pool.request()
+            .input('Name', conversationName)
             .query('INSERT INTO Conversations (Name) OUTPUT inserted.* VALUES (@Name)')
-        
-        const createdConversation: models.Conversation = result.recordset[0]
+        // Retrieve the created conversation object
+        const createdConversation: models.Conversation = createConv.recordset[0]
+
+        if (!createdConversation) {
+            throw new Error('Conversation creation failed');
+        }
+
+        // Add entries to relational table for each participantId
+        // under the newly generated conversationId
+        for (const userId of newConvPayload.participantIds) {
+            await pool.request()
+                .input('UserId', userId)
+                .input('ConversationId', createdConversation.id)
+                .query('INSERT INTO Users_Conversations (userId, conversationId) VALUES (@UserId, @ConversationId)');
+        }
 
         if (!createdConversation) {
             throw new Error('Conversation creation failed')
@@ -97,10 +123,10 @@ export const updateConversation = async (req: express.Request, res: express.Resp
         const conversation: models.Conversation = result.recordset[0]
 
         if (!conversation) {
-             res.status(404).json({ message: 'Conversation not found or update failed' })
+            res.status(404).json({ message: 'Conversation not found or update failed' })
         }
 
-        res.status(200).json(conversation) 
+        res.status(200).json(conversation)
     } catch (err) {
         console.error('Error updating Conversation:', err)
         res.status(500).json({ message: 'Error updating Conversation' })
@@ -130,7 +156,7 @@ export const deleteConversation = async (req: express.Request, res: express.Resp
         const deletedConversation: models.Conversation = result.recordset[0]
 
         if (!deletedConversation) {
-             res.status(404).json({ message: 'Conversation not found or already deleted' })
+            res.status(404).json({ message: 'Conversation not found or already deleted' })
         }
 
         res.status(200).json({ message: 'Conversation deleted successfully', conversation: deletedConversation })

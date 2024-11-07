@@ -70,7 +70,7 @@ export const getMessagesByConversationId = async (req: express.Request, res: exp
         res.json(message)
     } catch (err) {
         console.error('Error retrieving Message:', err)
-        res.status(500).json({ message: 'Error retrieving Message' })
+        res.status(500).json({ message: 'That conversationId does not exist.' })
     }
 }
 /**

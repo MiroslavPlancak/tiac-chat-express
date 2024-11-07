@@ -92,7 +92,8 @@ export const getParticipantsByConId = async (req: express.Request, res: express.
         if (conversation) {
             res.json(conversation);
         } else {
-            res.status(404).json({ message: 'Conversation not found.' });
+            res.json([])
+            return;
         }
     } catch (err) {
         console.error('Error retrieving grouped conversations:', err);
