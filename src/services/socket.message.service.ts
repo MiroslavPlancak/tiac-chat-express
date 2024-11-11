@@ -1,5 +1,6 @@
 import * as socketIO from 'socket.io';
-
+import * as db from '../config/db'
+import * as models from '../models'
 export class SocketMessageService {
   private io: socketIO.Server;
 
@@ -8,15 +9,43 @@ export class SocketMessageService {
   }
 
   // Broadcast the message to all connected clients
-  public sendMessage(message: string) {
-    console.log('Message received:', message);
-    this.io.emit('newMessage', message);
+  public async sendMessage(message: models.Messages.FrontendMessage) {
+    console.log('Message received:', message)
+    try {
+      // Connect to the database
+      const pool = await db.connectToDatabase()
+      const result = await pool.request()
+        .input('content', message.content)
+        .input('conversationId', message.conId)
+        .input('userId', message.userId)
+        .input('dateTime', message.datetime) 
+        .query(`
+          INSERT INTO Messages (content, conversationId, userId, dateTime)
+          OUTPUT inserted.*
+          VALUES (@content, @conversationId, @userId, @dateTime)
+        `)
+
+      const createdMessage = result.recordset[0]
+
+      if (!createdMessage) {
+        throw new Error('Message creation failed')
+      }
+
+      console.log('Message saved to database:', createdMessage)
+
+      // Broadcast to other clients
+      this.io.emit('newMessage', createdMessage)
+
+    } catch (error) {
+      console.error('Error saving message to database:', error)
+    }
+
   }
 
     // This method will register the events to the socket.
     public registerMessageEvents(socket: socketIO.Socket): void {
-        socket.on('sendMessage', (message: string) => {
-          this.sendMessage(message);
+        socket.on('sendMessage', (message: models.Messages.FrontendMessage) => {
+          this.sendMessage(message)
         });
       }
 }
