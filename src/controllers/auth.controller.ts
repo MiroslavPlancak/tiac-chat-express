@@ -79,12 +79,15 @@ export const registerUser = async (req: express.Request, res: express.Response) 
  * @returns {Promise<void>} - A promise that resolves to void. The response is sent directly to the client.
  */
 export const loginUser = async (req: express.Request, res: express.Response):Promise<void> => {
-    const { username, password } = req.body
+    const { username, password } : models.UserAuth = req.body
 
     if (!username || !password) {
          res.status(400).json({ message: 'Username and password are required' })
     }
-
+    // Generate a hash for the password '1234'
+// bcrypt.hash('1234', 12).then(hashedPassword => {
+//     console.log("Hashed password:", hashedPassword);
+//   });
     try {
         const pool = await db.connectToDatabase()
 
@@ -109,7 +112,7 @@ export const loginUser = async (req: express.Request, res: express.Response):Pro
         // Generate a JWT token
         const token = jwt.sign({ userId: UserId }, JWT_SECRET, { expiresIn: '1h' })
 
-        res.status(200).json({ message: 'Login successful', token })
+        res.status(200).json({ message: 'Login successful', jwtToken: token })
     } catch (err) {
         console.error('Error logging in user:', err)
         res.status(500).json({ message: 'Error logging in user' })

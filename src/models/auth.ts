@@ -3,6 +3,6 @@
 export interface UserAuth {
     userId: string
     username: string
-    passwordHash: string
+    password: string
   }
   

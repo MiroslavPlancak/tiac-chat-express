@@ -8,27 +8,20 @@ import * as authRoutes from './routes/auth.routes'
 import * as usersConversationsRoutes from './routes/userConversation.routes'
 import * as cors from 'cors'
 import * as http from 'http'
-import * as socketIo  from 'socket.io'
 import * as socketEvents  from './services/socket.service'
-
+import * as serverConfig from './config/server.config';
+import * as corsConfig from './config/cors.config'
 
 const app = express.default()
 const port = 5000
 const server = http.createServer(app)
-const io = new socketIo.Server(server, {
-  cors: {
-    origin: 'http://localhost:4200',
-    methods: ['GET', 'POST'],
-    credentials: true
-  }
-})
 
+// Use CORS from the external config
+app.use(cors.default(corsConfig.corsOptions));
 
-app.use(cors.default({
-  origin: 'http://localhost:4200',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
-}))
+// Set up the Socket.IO server
+const io = serverConfig.setupSocketIO(server);
+
 
 let pool: connPool.ConnectionPool | undefined
 
