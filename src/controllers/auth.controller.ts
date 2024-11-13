@@ -78,16 +78,16 @@ export const registerUser = async (req: express.Request, res: express.Response) 
  * 
  * @returns {Promise<void>} - A promise that resolves to void. The response is sent directly to the client.
  */
-export const loginUser = async (req: express.Request, res: express.Response):Promise<void> => {
+export const loginUser = async (req: express.Request, res: express.Response) => {
     const { username, password } : models.UserAuth = req.body
 
     if (!username || !password) {
          res.status(400).json({ message: 'Username and password are required' })
     }
     // Generate a hash for the password '1234'
-// bcrypt.hash('1234', 12).then(hashedPassword => {
-//     console.log("Hashed password:", hashedPassword);
-//   });
+    // bcrypt.hash('1234', 12).then(hashedPassword => {
+    //     console.log("Hashed password:", hashedPassword);
+    //   });
     try {
         const pool = await db.connectToDatabase()
 
@@ -97,7 +97,7 @@ export const loginUser = async (req: express.Request, res: express.Response):Pro
             .query('SELECT UserId, PasswordHash FROM UserAuth WHERE Username = @Username')
 
         if (result.recordset.length === 0) {
-             res.status(401).json({ message: 'Invalid credentials' })
+             return res.status(401).json({ message: 'Invalid credentials' })
         }
 
         const { UserId, PasswordHash } = result.recordset[0]
@@ -106,15 +106,15 @@ export const loginUser = async (req: express.Request, res: express.Response):Pro
         const isMatch = await bcrypt.compare(password, PasswordHash)
 
         if (!isMatch) {
-             res.status(401).json({ message: 'Invalid credentials' })
+            return res.status(401).json({ message: 'Invalid credentials' })
         }
 
         // Generate a JWT token
         const token = jwt.sign({ userId: UserId }, JWT_SECRET, { expiresIn: '1h' })
 
-        res.status(200).json({ message: 'Login successful', jwtToken: token })
+        return res.status(200).json({ message: 'Login successful', jwtToken: token })
     } catch (err) {
         console.error('Error logging in user:', err)
-        res.status(500).json({ message: 'Error logging in user' })
+        return res.status(500).json({ message: 'Error logging in user' })
     }
 }

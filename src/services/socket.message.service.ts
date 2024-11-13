@@ -10,7 +10,7 @@ export class SocketMessageService {
 
   // Broadcast the message to all connected clients
   public async sendMessage(message: models.Messages.FrontendMessage) {
-    console.log('Message received:', message)
+    
     try {
       // Connect to the database
       const pool = await db.connectToDatabase()

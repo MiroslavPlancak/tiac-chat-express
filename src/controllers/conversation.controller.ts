@@ -1,6 +1,7 @@
 import * as express from 'express'
 import * as db from '../config/db'
 import * as models from '../models'
+import * as utils from '../utilities/conversation-utils'
 
 /**
  * Get all {@link models.Conversation}[] objects from the database.
@@ -105,83 +106,23 @@ export const createConversation = async (req: express.Request, res: express.Resp
  * @returns {Promise<void>} - A Promise that resolves when the user is updated successfully or an error response is returned.
  */
 export const updateConversation = async (req: express.Request, res: express.Response): Promise<void> => {
-    const { id } = req.params
-    const payload = req.body
-    console.log(`payload is:`, payload)
+    const { id } = req.params;
+    const payload = req.body;
+  
     try {
-        const pool = await db.connectToDatabase()
-        let conversationEntry: models.Conversation.Con | undefined
-
-        // Update conversation name if provided
-        if (payload.name !== undefined) {
-            const result = await pool.request()
-                .input('id', id)
-                .input('Name', payload.name)
-                .query(`
-                    UPDATE Conversations 
-                    SET Name = @Name 
-                    OUTPUT inserted.* 
-                    WHERE id = @id
-                `)
-            conversationEntry = result.recordset[0]
-            
-            if (!conversationEntry) {
-                res.status(404).json({ message: 'Conversation not found or update failed' })
-                return
-            }
-        }
-
-        // Add participants
-        if (payload.participantIdsToAdd) {
-            for (const userId of payload.participantIdsToAdd) {
-                await pool.request()
-                    .input('UserId', userId)
-                    .input('ConversationId', id)
-                    .query(`
-                        INSERT INTO Users_Conversations (userId, conversationId)
-                        VALUES (@UserId, @ConversationId)
-                    `)
-            }
-        }
-
-        // Remove participants
-        if (payload.participantIdsToRemove) {
-            for (const userId of payload.participantIdsToRemove) {
-                await pool.request()
-                    .input('UserId', userId)
-                    .input('ConversationId', id)
-                    .query(`
-                        DELETE FROM Users_Conversations
-                        WHERE userId = @UserId AND conversationId = @ConversationId
-                    `)
-            }
-        }
-
-        // Fetch and return the updated conversation with all participants
-        const updatedConversation = await pool.request()
-            .input('ConversationId', id)
-            .query(`
-                SELECT c.id, c.name, uc.userId AS participantId
-                FROM Conversations AS c
-                LEFT JOIN Users_Conversations AS uc ON c.id = uc.conversationId
-                WHERE c.id = @ConversationId
-            `);
-
-        // Map the SQL result into a `Conversation` object
-        const conversationWithParticipants: models.Conversation.ConWithParticipants = {
-            id: updatedConversation.recordset[0].id,
-            name: updatedConversation.recordset[0].name,
-            participantIds: updatedConversation.recordset.map(row => row.participantId)
-        };
-
-        res.status(200).json(conversationWithParticipants);
-
+      // Update conversation participants (reusing the utility function)
+      const updatedConversation = await utils.updateConversationParticipants(
+        id, 
+        payload.participantIdsToAdd, 
+        payload.participantIdsToRemove
+      );
+  
+      res.status(200).json(updatedConversation);
     } catch (err) {
-        console.error('Error updating Conversation:', err)
-        res.status(500).json({ message: 'Error updating Conversation' })
+      console.error('Error updating Conversation:', err);
+      res.status(500).json({ message: 'Error updating Conversation' });
     }
-}
-
+  };
 /**
  * Delete an existing {@link models.Conversation} object via a DELETE request.
  *
@@ -215,3 +156,5 @@ export const deleteConversation = async (req: express.Request, res: express.Resp
         res.status(500).json({ message: 'Error deleting conversation' })
     }
 }
+
+
