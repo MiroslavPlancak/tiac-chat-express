@@ -2,21 +2,51 @@ import * as express from 'express'
 import * as db from '../config/db'
 import * as models from '../models'
 import * as utils from '../utilities/conversation-utils'
+import mssql from 'mssql';
+
+
 
 /**
  * Get all {@link models.Conversation}[] objects from the database.
  */
-export const getConversations = async (req: express.Request, res: express.Response) => {
+export const getConversationsByUserId = async (req: express.Request, res: express.Response): Promise<void> => {
+    const { userId } = req.params;
     try {
-        const pool = await db.connectToDatabase() // request object
-        const result = await pool.query('SELECT * FROM Conversations')
-        const conversations: models.Conversation.Con[] = result.recordset
-        res.json(conversations)
+        const pool = await db.connectToDatabase();
+        
+        // Step 1: Retrieve conversation IDs for the user
+        const conversationIdsResult = await pool.request()
+            .input('UserId', userId)
+            .query('SELECT conversationId FROM Users_Conversations WHERE UserId = @UserId');
+        
+        const conversationIds = conversationIdsResult.recordset.map(record => record.conversationId);
+
+        if (conversationIds.length === 0) {
+            res.json([]); // No conversations for the user
+            return;
+        }
+
+        console.log(`conversationIds is:`, conversationIds);
+
+        // Step 2: Retrieve the full conversation details for each conversation ID
+        const conversationsResult = await pool.request()
+            .input('id', mssql.VarChar(mssql.MAX), conversationIds.join(',')) // Convert array to comma-separated string
+            .query(`
+                SELECT * FROM Conversations 
+                WHERE id IN (SELECT value FROM STRING_SPLIT(@id, ','))
+            `);
+
+        const conversations = conversationsResult.recordset;
+
+        // Step 3: Send the conversations as a JSON response
+        res.json(conversations);
+
     } catch (err) {
-        console.error('Error retrieving conversations:', err)
-        res.status(500).json({ message: 'Error retrieving conversations.' })
+        console.error('Error retrieving conversations:', err);
+        res.status(500).json({ message: 'Error retrieving conversations.' });
     }
-}
+};
+
 /**
  * Get a specific {@link models.Conversation} object by unique string identifier.
  * @param {string} id - The unique identifier of the user to retrieve.
