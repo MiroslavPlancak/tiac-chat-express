@@ -13,62 +13,62 @@ export class SocketConService {
     this._authService = authService;
   }
 
-  // This method handles the update of conversation participants and emits the update
-  public async notifyParticipantsOfAddion(conId: string, participantIds: models.Conversation.ConWithParticipants) {
+  /**This method handles the notification of addition of participants to the conversation */
+  public async notifyParticipantsOfAddion(conId: string) {
     try {
-      console.log(`updateConv`, participantIds)
       const currentConParticipants = await utils.getUserIdsByConversationId(conId)
-      console.log(`updateconv/currentConParticipants`, currentConParticipants)
-      //emit to all current participants of the update 
+      const conversationName = await utils.getConversationNameByConId(conId)
+      console.log(`this happens, name is:`, conversationName)
+      //notify all current participants of the addition
       //including the added one/s
       currentConParticipants.forEach(userId => {
         const participantSocketId = this._authService.getSocketIdByUserId(userId);
         if (participantSocketId) {
-          this._io.to(participantSocketId).emit('conParticipantListUpdatedResponse', { conId, participantIds: currentConParticipants });
+          this._io.to(participantSocketId).emit('conParticipantListUpdatedResponse', { conId, name: conversationName, participantIds: currentConParticipants });
         }
       });
     } catch (error) {
       console.error('Error emitting conversation participant update:', error);
     }
   }
-  public async notifyParticipantsOfRemoval(conId: string, participantIds: models.Conversation.ConWithParticipants){
+  /**This method handles the notification of removal of the participants from the conversation */
+  public async notifyParticipantsOfRemoval(conId: string, participantIds: models.Conversation.ConWithParticipants) {
     try {
-  
-      //emit message to the participant that 
-      //has been removed from conversation
       const removedParticipantId = participantIds?.participantIdsToRemove
       const currentConParticipants = await utils.getUserIdsByConversationId(conId)
 
-      //notify the remaining participants in the conversation of the removal
-      currentConParticipants?.forEach(userId => {
-        const participantSocketId = this._authService.getSocketIdByUserId(userId);
-        if (participantSocketId) {
-          
-          this._io.to(participantSocketId).emit('conParticipantListUpdatedResponse', { conId, participantIds: currentConParticipants });
-        }
-      });
-      //notify the participant who got removed
+      //notify the client that he has been removed from the conversation
       removedParticipantId?.forEach(userId => {
         const participantSocketId = this._authService.getSocketIdByUserId(userId);
         if (participantSocketId) {
-          //this needs to emit to a different method, that method needs to pick it up and update the conList properly on front end
-          this._io.to(participantSocketId).emit('conParticipantRemovedResponse', conId );
+          this._io.to(participantSocketId).emit('conParticipantRemovedResponse', conId);
         }
       });
-      
+
+      //notify the remaining participants in that conversation of that removal
+      currentConParticipants?.forEach(userId => {
+        const participantSocketId = this._authService.getSocketIdByUserId(userId);
+        if (participantSocketId) {
+
+          this._io.to(participantSocketId).emit('conParticipantListUpdatedResponse', { conId, participantIds: currentConParticipants });
+        }
+      });
     } catch (error) {
       console.error('Error emitting conversation participant update:', error);
     }
   }
+
   public registerConversationEvents(socket: socketIO.Socket): void {
-    socket.on('updateParticipantListRequest', (conId: string, participantIds: models.Conversation.ConWithParticipants) => {
-      console.log(`register:`, participantIds)
-      if(participantIds.participantIdsToAdd){
-        this.notifyParticipantsOfAddion(conId, participantIds);
-      }else{
+    /**
+     * This request method determines whether we will notify the client of addition
+     * or removal of participants in a given conversation.
+     */
+    socket.on('updateConParticipantListRequest', (conId: string, participantIds: models.Conversation.ConWithParticipants) => {
+      if (participantIds.participantIdsToAdd) {
+        this.notifyParticipantsOfAddion(conId);
+      } else {
         this.notifyParticipantsOfRemoval(conId, participantIds)
-      } 
-      
+      }
     });
   }
 }

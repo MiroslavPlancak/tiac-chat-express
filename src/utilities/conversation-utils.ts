@@ -73,3 +73,15 @@ export async function getUserIdsByConversationId(conId: string): Promise<string[
  
 }
 
+
+export async function getConversationNameByConId(conId: string): Promise<string> {
+  const pool = await db.connectToDatabase()
+  const foundConName = await pool.request()
+  .input('conId', conId)
+  .query('SELECT name FROM Conversations WHERE id = @conId')
+  const conName = foundConName.recordset[0]?.name
+  if (typeof conName !== 'string') {
+    throw new Error(`Conversation name not found for conversation ID: ${conId}`);
+  }
+  return conName 
+}

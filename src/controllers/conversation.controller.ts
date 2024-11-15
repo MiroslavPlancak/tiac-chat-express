@@ -26,7 +26,7 @@ export const getConversationsByUserId = async (req: express.Request, res: expres
             return;
         }
 
-        console.log(`conversationIds is:`, conversationIds);
+     
 
         // Step 2: Retrieve the full conversation details for each conversation ID
         const conversationsResult = await pool.request()
