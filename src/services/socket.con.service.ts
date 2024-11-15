@@ -57,7 +57,25 @@ export class SocketConService {
       console.error('Error emitting conversation participant update:', error);
     }
   }
+  public async notifyAddedClientOfNewConversation(con: models.Conversation.ConWithParticipants, addedParticipantsId: models.User.id[]) {
 
+    try {
+
+      const addedParticipantSocketId = this._authService.getSocketIdByUserId(addedParticipantsId[1])
+      const conWithParticipants:models.Conversation.ConWithParticipants ={
+        id: con.id,
+        name: con.name,
+        createdAt: con.createdAt,
+        participantIds: [...addedParticipantsId],
+      } 
+      //notify added participant of private conversation creation
+      if (addedParticipantSocketId) {
+        this._io.to(addedParticipantSocketId).emit('privateConversationCreatedResponse',  conWithParticipants )
+      }
+    } catch (error) {
+      console.error('Error emitting conversation participant update:', error);
+    }
+  }
   public registerConversationEvents(socket: socketIO.Socket): void {
     /**
      * This request method determines whether we will notify the client of addition
@@ -70,5 +88,12 @@ export class SocketConService {
         this.notifyParticipantsOfRemoval(conId, participantIds)
       }
     });
+    /**
+     * This request method simply forwards the payload to the notifier method.
+     */
+    socket.on('updateParticipantOfPrivateConCreationRequest', (con: models.Conversation.ConWithParticipants, addedParticipantsId: models.User.id[]) => {
+      this.notifyAddedClientOfNewConversation(con, addedParticipantsId)
+    })
   }
+
 }
