@@ -1,11 +1,12 @@
 import * as socketIO from 'socket.io';
 import * as db from '../config/db'
 import * as models from '../models'
-export class SocketMessageService {
-  private io: socketIO.Server;
 
-  constructor(io: socketIO.Server) {
-    this.io = io;
+export class SocketMessageService {
+  private ioServer: socketIO.Server;
+
+  constructor(ioServer: socketIO.Server) {
+    this.ioServer = ioServer;
   }
 
   // Broadcast the message to all connected clients
@@ -34,7 +35,7 @@ export class SocketMessageService {
       console.log('Message saved to database:', createdMessage)
 
       // Broadcast to other clients
-      this.io.emit('newMessage', createdMessage)
+      this.ioServer.emit('newMessage', createdMessage)
 
     } catch (error) {
       console.error('Error saving message to database:', error)

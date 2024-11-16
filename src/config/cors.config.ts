@@ -7,9 +7,9 @@ const corsOptions: cors.CorsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     if (origin !== undefined) {
       if (allowedOrigins.includes(origin)) {
-        callback(null, true) // Allow the origin
+        callback(null, true) 
       } else {
-        callback(new Error('Not allowed by CORS')) // Reject the origin
+        callback(new Error('Not allowed by CORS')) 
       }
     } else {
       callback(null, true) // Allow requests with no origin (like Postman)

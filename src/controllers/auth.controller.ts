@@ -6,7 +6,6 @@ import * as bcrypt from 'bcrypt'
 import * as crypto from 'crypto'
 import * as uniqueIdGenerator from 'uuid'
 
-
 const JWT_SECRET = crypto.randomBytes(64).toString('hex')
 console.log('Your generated JWT_SECRET:', JWT_SECRET)
 
@@ -78,7 +77,7 @@ export const registerUser = async (req: express.Request, res: express.Response) 
  * 
  * @returns {Promise<void>} - A promise that resolves to void. The response is sent directly to the client.
  */
-export const loginUser = async (req: express.Request, res: express.Response) => {
+export const loginUser = async (req: express.Request, res: express.Response):Promise<void> => {
     const { username, password } : models.UserAuth = req.body
 
     if (!username || !password) {
@@ -97,7 +96,8 @@ export const loginUser = async (req: express.Request, res: express.Response) => 
             .query('SELECT UserId, PasswordHash FROM UserAuth WHERE Username = @Username')
 
         if (result.recordset.length === 0) {
-             return res.status(401).json({ message: 'Invalid credentials' })
+              res.status(401).json({ message: 'Invalid credentials' })
+              return
         }
 
         const { UserId, PasswordHash } = result.recordset[0]
@@ -106,15 +106,18 @@ export const loginUser = async (req: express.Request, res: express.Response) => 
         const isMatch = await bcrypt.compare(password, PasswordHash)
 
         if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid credentials' })
+             res.status(401).json({ message: 'Invalid credentials' })
+             return
         }
 
         // Generate a JWT token
         const token = jwt.sign({ userId: UserId }, JWT_SECRET, { expiresIn: '1h' })
 
-        return res.status(200).json({ message: 'Login successful', jwtToken: token })
+         res.status(200).json({ message: 'Login successful', jwtToken: token })
+         return
     } catch (err) {
         console.error('Error logging in user:', err)
-        return res.status(500).json({ message: 'Error logging in user' })
+         res.status(500).json({ message: 'Error logging in user' })
+         return
     }
 }

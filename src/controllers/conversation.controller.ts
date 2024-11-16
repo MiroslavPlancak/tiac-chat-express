@@ -2,51 +2,56 @@ import * as express from 'express'
 import * as db from '../config/db'
 import * as models from '../models'
 import * as utils from '../utilities/conversation-utils'
-import mssql from 'mssql';
-
-
+import mssql from 'mssql'
 
 /**
  * Get all {@link models.Conversation}[] objects from the database.
  */
 export const getConversationsByUserId = async (req: express.Request, res: express.Response): Promise<void> => {
-    const { userId } = req.params;
+    const { userId } = req.params
     try {
-        const pool = await db.connectToDatabase();
-        
-        // Step 1: Retrieve conversation IDs for the user
+        const pool = await db.connectToDatabase()
+            
         const conversationIdsResult = await pool.request()
             .input('UserId', userId)
-            .query('SELECT conversationId FROM Users_Conversations WHERE UserId = @UserId');
+            .query('SELECT conversationId FROM Users_Conversations WHERE UserId = @UserId')
         
-        const conversationIds = conversationIdsResult.recordset.map(record => record.conversationId);
+        const conversationIds = conversationIdsResult.recordset.map(record => record.conversationId)
 
         if (conversationIds.length === 0) {
-            res.json([]); // No conversations for the user
-            return;
+            res.json([]) 
+            return
         }
+        //inefficient for larger quantities of conversationIds
+        //as it requests multiple sql queries instead of one
 
-     
+        // const conObjs = [];
+        // for (const conversationId of conversationIds) {
+        //     const conversationResult = await pool.request()
+        //         .input('ConversationId', conversationId)
+        //         .query('SELECT * FROM Conversations WHERE id = @ConversationId');
 
-        // Step 2: Retrieve the full conversation details for each conversation ID
+        //     if (conversationResult.recordset.length > 0) {
+        //         conObjs.push(conversationResult.recordset[0]); // Push the first matching conversation
+        //     }
+        // }
+
+        // efficient approach: it only makes one sql query
         const conversationsResult = await pool.request()
-            .input('id', mssql.VarChar(mssql.MAX), conversationIds.join(',')) // Convert array to comma-separated string
+            .input('id', mssql.VarChar(mssql.MAX), conversationIds.join(',')) 
             .query(`
                 SELECT * FROM Conversations 
                 WHERE id IN (SELECT value FROM STRING_SPLIT(@id, ','))
-            `);
+            `)
 
-        const conversations = conversationsResult.recordset;
-
-        // Step 3: Send the conversations as a JSON response
-        res.json(conversations);
+        const conversations = conversationsResult.recordset
+        res.json(conversations)
 
     } catch (err) {
-        console.error('Error retrieving conversations:', err);
-        res.status(500).json({ message: 'Error retrieving conversations.' });
+        console.error('Error retrieving conversations:', err)
+        res.status(500).json({ message: 'Error retrieving conversations.' })
     }
-};
-
+}
 /**
  * Get a specific {@link models.Conversation} object by unique string identifier.
  * @param {string} id - The unique identifier of the user to retrieve.
@@ -61,15 +66,14 @@ export const getConversationById = async (req: express.Request, res: express.Res
         // input parameter
         request.input('id', id)
 
-
         const result = await request.query('SELECT * FROM Conversations WHERE id = @id')
         const conversation: models.Conversation.Con | undefined = result.recordset[0]
 
         if (result.recordset.length === 0) {
             res.status(404).json({ message: 'Conversation not found' })
         }
-
         res.json(conversation)
+
     } catch (err) {
         console.error('Error retrieving conversation:', err)
         res.status(500).json({ message: 'Error retrieving conversation' })
@@ -83,19 +87,19 @@ export const getConversationById = async (req: express.Request, res: express.Res
  * @returns {Promise<void>} - A Promise that resolves when the user is created successfully or an error response is returned.
  */
 export const createConversation = async (req: express.Request, res: express.Response): Promise<void> => {
-    const newConvPayload = req.body
-    console.log(`second participant id is:`, newConvPayload.participantIds[1])
+    const newConv = req.body
     try {
         const pool = await db.connectToDatabase()
 
         // Find user object 
         const findUser = await pool.request()
-            .input('Id', newConvPayload.participantIds[1])
+            .input('Id', newConv.participantIds[1])
             .query('SELECT * FROM Users WHERE Id =@id ')
-        console.log(`findUser`, findUser.recordset)
+
         if (!findUser.recordset.length) {
             throw new Error('Participant not found.')
         }
+        
         //Assign the name of the conversation
         //based on the first participant added
         const conversationName = findUser.recordset[0].name
@@ -111,7 +115,7 @@ export const createConversation = async (req: express.Request, res: express.Resp
 
         // Add entries to relational table for each participantId
         // under the newly generated conversationId
-        for (const userId of newConvPayload.participantIds) {
+        for (const userId of newConv.participantIds) {
             await pool.request()
                 .input('UserId', userId)
                 .input('ConversationId', createdConversation.id)
@@ -136,8 +140,8 @@ export const createConversation = async (req: express.Request, res: express.Resp
  * @returns {Promise<void>} - A Promise that resolves when the user is updated successfully or an error response is returned.
  */
 export const updateConversation = async (req: express.Request, res: express.Response): Promise<void> => {
-    const { id } = req.params;
-    const payload = req.body;
+    const { id } = req.params
+    const payload = req.body
   
     try {
       // Update conversation participants (reusing the utility function)
@@ -145,14 +149,14 @@ export const updateConversation = async (req: express.Request, res: express.Resp
         id, 
         payload.participantIdsToAdd, 
         payload.participantIdsToRemove
-      );
+      )
   
-      res.status(200).json(updatedConversation);
+      res.status(200).json(updatedConversation)
     } catch (err) {
-      console.error('Error updating Conversation:', err);
-      res.status(500).json({ message: 'Error updating Conversation' });
+      console.error('Error updating Conversation:', err)
+      res.status(500).json({ message: 'Error updating Conversation' })
     }
-  };
+  }
 /**
  * Delete an existing {@link models.Conversation} object via a DELETE request.
  *

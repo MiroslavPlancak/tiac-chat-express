@@ -26,13 +26,10 @@ export const getUserById = async (req: express.Request, res: express.Response): 
     const { id } = req.params
     try {
         const pool = await db.connectToDatabase()
-        const request = pool.request()  // request object
+        const result = await pool.request()  
+        .input('id', id)
+        .query('SELECT * FROM Users WHERE id = @id')
 
-        // input parameter
-        request.input('id', id)
-
-
-        const result = await request.query('SELECT * FROM Users WHERE id = @id')
         const user: models.User | undefined = result.recordset[0]
 
         if (result.recordset.length === 0) {
@@ -82,7 +79,6 @@ export const createUser = async (req: express.Request, res: express.Response): P
 export const updateUser = async (req: express.Request, res: express.Response): Promise<void> => {
     const { id } = req.params
     const updatedUser = req.body
-
     try {
         const pool = await db.connectToDatabase()
         const result = await pool.request()
@@ -101,7 +97,7 @@ export const updateUser = async (req: express.Request, res: express.Response): P
              res.status(404).json({ message: 'User not found or update failed' })
         }
 
-        res.status(200).json(user) // Return the updated user
+        res.status(200).json(user) 
     } catch (err) {
         console.error('Error updating user:', err)
         res.status(500).json({ message: 'Error updating user' })

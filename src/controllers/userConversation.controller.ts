@@ -2,33 +2,6 @@ import * as express from 'express'
 import * as db from '../config/db'
 import * as models from '../models'
 
-export const getUserIdsGroupedByConversation = async (req: express.Request, res: express.Response) => {
-    try {
-        const pool = await db.connectToDatabase()
-        const result = await pool.request()
-            .query('SELECT * FROM Users_Conversations')
-
-        const usersConversations: { userId: string, conversationId: string }[] = result.recordset
-
-        // Group userIds by conversationId
-        const conversations: { [key: string]: { id: string, participantIds: string[] } } = {}
-
-        usersConversations.forEach(({ userId, conversationId }) => {
-            if (!conversations[conversationId]) {
-                conversations[conversationId] = { id: conversationId, participantIds: [] }
-            }
-            conversations[conversationId].participantIds.push(userId)
-        })
-
-        // Convert the object to an array for response
-        const conversationArray = Object.values(conversations)
-        res.json(conversationArray)
-    } catch (err) {
-        console.error('Error retrieving grouped conversations:', err)
-        res.status(500).json({ message: 'Error retrieving conversations.' })
-    }
-}
-
 /**
  * Get all {@link models.UserConversation} [] objects of a specific user {@link models.User.id} id.
  *  @param {string} userId - The unique identifier of the user.

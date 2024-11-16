@@ -1,4 +1,4 @@
-import sql from 'mssql' // Importing sql as the default export
+import sql from 'mssql' 
 
 
 // Define the database configuration object
@@ -16,7 +16,7 @@ const dbConfig = {
 // Connect to the database and return the pool instance
 export async function connectToDatabase() {
   try {
-    const pool = await new sql.ConnectionPool(dbConfig).connect();// Accessing ConnectionPool through sql
+    const pool = await new sql.ConnectionPool(dbConfig).connect()// Accessing ConnectionPool through sql
     // console.log('Connected to the database!')
     return pool
   } catch (err) {

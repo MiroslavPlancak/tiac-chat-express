@@ -41,7 +41,6 @@ export async function updateConversationParticipants(
     }
   }
 
-  // Fetch updated conversation with participants
   const updatedConversation = await pool.request()
     .input('ConversationId', conversationId)
     .query(`
@@ -51,7 +50,6 @@ export async function updateConversationParticipants(
       WHERE c.id = @ConversationId
     `)
 
-  // Map the SQL result into a `Conversation` object
   const conversationWithParticipants: models.Conversation.ConWithParticipants = {
     id: updatedConversation.recordset[0].id,
     name: updatedConversation.recordset[0].name,
