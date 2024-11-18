@@ -35,7 +35,7 @@ export class SocketMessageService {
       console.log('Message saved to database:', createdMessage)
 
       // Broadcast to other clients
-      this.ioServer.emit('newMessage', createdMessage)
+      this.ioServer.emit('receivedMessage', createdMessage)
 
     } catch (error) {
       console.error('Error saving message to database:', error)

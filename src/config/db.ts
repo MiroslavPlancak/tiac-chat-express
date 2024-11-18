@@ -3,14 +3,17 @@ import sql from 'mssql'
 
 // Define the database configuration object
 const dbConfig = {
-  user: 'miroslavExpress',
-  password: 'Dzgx8n+QqBoD0',
+  user: 'miroslav',
+  password: 'Amorfati1988!',
   server: 'localhost',
-  database: 'TiacChatReimagined',
+  database: 'TiacChatExpress',
+  
   options: {
-    encrypt: true,
+    encrypt: false,
     trustServerCertificate: true,
+    
   },
+  
 }
 
 // Connect to the database and return the pool instance
