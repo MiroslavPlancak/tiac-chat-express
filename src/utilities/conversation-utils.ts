@@ -44,7 +44,7 @@ export async function updateConversationParticipants(
   const updatedConversation = await pool.request()
     .input('ConversationId', conversationId)
     .query(`
-      SELECT c.id, c.name, uc.userId AS participantId
+      SELECT c.id, c.name,c.creatorId, uc.userId AS participantId
       FROM Conversations AS c
       LEFT JOIN Users_Conversations AS uc ON c.id = uc.conversationId
       WHERE c.id = @ConversationId
@@ -53,7 +53,8 @@ export async function updateConversationParticipants(
   const conversationWithParticipants: models.Conversation.ConWithParticipants = {
     id: updatedConversation.recordset[0].id,
     name: updatedConversation.recordset[0].name,
-    participantIds: updatedConversation.recordset.map(row => row.participantId)
+    participantIds: updatedConversation.recordset.map(row => row.participantId),
+    creatorId: updatedConversation.recordset[0].creatorId
   }
 
   return conversationWithParticipants

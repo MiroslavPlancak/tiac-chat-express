@@ -69,6 +69,7 @@ export class SocketConService {
         name: con.name,
         createdAt: con.createdAt,
         participantIds: [...addedParticipantsId],
+        creatorId: ''
       }
       //notify added participant of private conversation creation
       if (addedParticipantSocketId) {

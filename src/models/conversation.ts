@@ -4,6 +4,7 @@ export namespace Conversation{
     id: string            // uniqueidentifier in SQL corresponds to string in TypeScript
     name?: string         // nvarchar(255) in SQL corresponds to string in TypeScript (optional)
     createdAt?: Date      // datetime in SQL corresponds to Date in TypeScript (optional)
+    creatorId: string
   }
   
   export interface ConWithParticipants extends Con {
