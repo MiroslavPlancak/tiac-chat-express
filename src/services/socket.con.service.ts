@@ -78,6 +78,22 @@ export class SocketConService {
       console.error('Error emitting conversation participant update:', error)
     }
   }
+
+  public async notifyClientsOfDeletedConversation(deletedConversation: models.Conversation.ConWithParticipants) {
+    try{
+     
+      const participantIdsToNotify = deletedConversation.participantIds
+      participantIdsToNotify.forEach(participantId =>{
+        const participantSocketId = this._authService.getSocketIdByUserId(participantId)
+        if (participantSocketId) {
+          this._ioServer.to(participantSocketId).emit('deleteCoversationResponse', deletedConversation)
+        }
+      })
+    }catch(error){
+      console.error('Error emitting conversation participant update:', error)
+    }
+  }
+
   public registerConversationEvents(socket: socketIO.Socket): void {
     /**
      * This request method determines whether we will notify the client of addition
@@ -100,6 +116,13 @@ export class SocketConService {
       ) => {
         this.notifyAddedClientOfNewConversation(con, addedParticipantsId)
       })
+    /**
+      * This request method forwards the payload to the notifier method
+      */
+    socket.on('deleteCoversationRequest',(deletedConversation: models.Conversation.ConWithParticipants)=>{
+      this.notifyClientsOfDeletedConversation(deletedConversation)
+    })
   }
+
 
 }

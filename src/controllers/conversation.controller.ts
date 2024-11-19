@@ -90,7 +90,7 @@ export const createConversation = async (req: express.Request, res: express.Resp
     const newConv = req.body
     try {
         const pool = await db.connectToDatabase()
-
+        
         // Find user object 
         const findUser = await pool.request()
             .input('Id', newConv.participantIds[1])
@@ -105,7 +105,8 @@ export const createConversation = async (req: express.Request, res: express.Resp
         const conversationName = findUser.recordset[0].name
         const createConv = await pool.request()
             .input('Name', conversationName)
-            .query('INSERT INTO Conversations (Name) OUTPUT inserted.* VALUES (@Name)')
+            .input('CreatorId', newConv.creatorId)
+            .query('INSERT INTO Conversations (Name,CreatorId) OUTPUT inserted.* VALUES (@Name,@CreatorId)')
         // Retrieve the created conversation object
         const createdConversation: models.Conversation.Con = createConv.recordset[0]
 
@@ -167,7 +168,9 @@ export const updateConversation = async (req: express.Request, res: express.Resp
  */
 export const deleteConversation = async (req: express.Request, res: express.Response): Promise<void> => {
     const { id } = req.params
-
+    //extract the participant ids before the conversation  
+    //and it's userId/conversationId entries are deleted by cascade
+    const participantsInCon = await utils.getUserIdsByConversationId(id)
     try {
         const pool = await db.connectToDatabase()
         const result = await pool.request()
@@ -178,13 +181,18 @@ export const deleteConversation = async (req: express.Request, res: express.Resp
                 WHERE id = @id
             `)
 
-        const deletedConversation: models.Conversation.Con = result.recordset[0]
-
+        const deletedConversation: models.Conversation.ConWithParticipants = result.recordset[0]
+      
+     
+        const deletedConWithParticipants = {
+            ...deletedConversation,
+            participantIds:participantsInCon
+        }
         if (!deletedConversation) {
             res.status(404).json({ message: 'Conversation not found or already deleted' })
         }
 
-        res.status(200).json({ message: 'Conversation deleted successfully', conversation: deletedConversation })
+        res.status(200).json(deletedConWithParticipants)
     } catch (err) {
         console.error('Error deleting conversation:', err)
         res.status(500).json({ message: 'Error deleting conversation' })

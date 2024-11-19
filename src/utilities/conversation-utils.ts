@@ -61,12 +61,14 @@ export async function updateConversationParticipants(
 
 
 export async function getUserIdsByConversationId(conId: string): Promise<string[]> {
+  
   const pool = await db.connectToDatabase()
   
   const updatedParticipantIds = await pool.request()
   .input('ConversationId', conId)
   .query('SELECT userId FROM Users_Conversations WHERE conversationId = @ConversationId')
   const participantIds = updatedParticipantIds.recordset
+  
   return participantIds.map(row => row.userId)
  
 }
