@@ -1,7 +1,7 @@
 import * as socketIO from 'socket.io'
 
 export class SocketAuthService {
-    private clientConnectionSocketIdMap: Map<string, string>
+    public clientConnectionSocketIdMap: Map<string, string>
 
     constructor() {
         this.clientConnectionSocketIdMap = new Map<string, string>()

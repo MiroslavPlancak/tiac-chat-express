@@ -4,7 +4,7 @@ import sql from 'mssql'
 // Define the database configuration object
 const dbConfig = {
   user: 'miroslav',
-  password: 'Amorfati1988!',
+  password: '6xwSfiDzgBoD0x8n',
   server: 'localhost',
   database: 'TiacChatExpress',
   
