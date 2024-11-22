@@ -1,4 +1,4 @@
-import * as socketIO from 'socket.io';
+import * as socketIO from 'socket.io'
 import * as db from '../config/db'
 import * as models from '../models'
 import * as services from './socket.auth.service'
@@ -14,27 +14,45 @@ export class SocketUserService {
 
     //----------------------------------- NOTIFIER METHODS ---------------------------------------//
     notifyAllClientsOfUserComingOnline(userId: string) {
-        console.log(`Notifying all clients that user ${userId} is online.`);
+        console.log(`Notifying all clients that user ${userId} is online.`)
 
         // Iterate over the map and send the notification to each user
         this._authService.clientConnectionSocketIdMap.forEach((socketId, connectedUserId) => {
-            console.log(`Sending 'userHasComeOnlineResponse' to user ${connectedUserId} via socket ${socketId}.`);
-            this._ioServer.to(socketId).emit('userHasComeOnlineResponse',  userId);
-        });
+            console.log(`Sending 'userHasComeOnlineResponse' to user ${connectedUserId} via socket ${socketId}.`)
+            this._ioServer.to(socketId).emit('userHasComeOnlineResponse',  userId)
+        })
     }
 
     notifyAllClientsOfUserGoingOffline(userId: string) {
-        console.log(`Notifying all clients that user ${userId} is offline.`);
+        console.log(`Notifying all clients that user ${userId} is offline.`)
 
         // Iterate over the map and send the notification to each user
         this._authService.clientConnectionSocketIdMap.forEach((socketId, connectedUserId) => {
-            console.log(`Sending 'userHasWentOfflineResponse' to user ${connectedUserId} via socket ${socketId}.`);
-            this._ioServer.to(socketId).emit('userHasWentOfflineResponse',  userId );
-        });
+            console.log(`Sending 'userHasWentOfflineResponse' to user ${connectedUserId} via socket ${socketId}.`)
+            this._ioServer.to(socketId).emit('userHasWentOfflineResponse',  userId )
+        })
     }
-
+    notifyClientOfOnlineUsersMap( userId: models.User.id, onlineUsers: string[]) {
+        const foundClientSocket = this._authService.getSocketIdByUserId(userId)
+        if (!foundClientSocket) {
+            console.warn(`Socket not found for user ${userId}. Cannot send online users map.`)
+            return
+        }
+        this._ioServer.to(foundClientSocket).emit('onlineUsersMapResponse', onlineUsers)
+    }
+    
     // This method will register the events to the socket.
     public registerUserEvents(socket: socketIO.Socket): void {
+
+        socket.on('onlineUsersMapRequest', (userId: models.User.id) => {
+            try {
+                if (!userId) throw new Error('Invalid userId received for onlineUsersMapRequest')
+                const onlineUsers = this._authService.getOnlineUsers()
+                this.notifyClientOfOnlineUsersMap(userId, onlineUsers )
+            } catch (error) {
+                console.error(`Error in onlineUsersMapRequest handler: ${error}`)
+            }
+        })
 
         socket.on('userHasComeOnlineRequest', (userId: models.User.id): void => {
             console.log(`userComingOnlineListener`)
@@ -45,5 +63,6 @@ export class SocketUserService {
             this.notifyAllClientsOfUserGoingOffline(userId)
         })
     }
+
 
 }

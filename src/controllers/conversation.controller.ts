@@ -1,7 +1,7 @@
 import * as express from 'express'
 import * as db from '../config/db'
 import * as models from '../models'
-import * as utils from '../utilities/conversation-utils'
+import * as utils from '../utilities'
 import mssql from 'mssql'
 
 /**
@@ -146,7 +146,7 @@ export const updateConversation = async (req: express.Request, res: express.Resp
   
     try {
       // Update conversation participants (reusing the utility function)
-      const updatedConversation = await utils.updateConversationParticipants(
+      const updatedConversation = await utils.ConUtils.updateConversationParticipants(
         id, 
         payload.participantIdsToAdd, 
         payload.participantIdsToRemove
@@ -170,7 +170,7 @@ export const deleteConversation = async (req: express.Request, res: express.Resp
     const { id } = req.params
     //extract the participant ids before the conversation  
     //and it's userId/conversationId entries are deleted by cascade
-    const participantsInCon = await utils.getUserIdsByConversationId(id)
+    const participantsInCon = await utils.ConUtils.getUserIdsByConversationId(id)
     try {
         const pool = await db.connectToDatabase()
         const result = await pool.request()

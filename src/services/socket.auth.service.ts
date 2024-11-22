@@ -59,5 +59,7 @@ export class SocketAuthService {
         })
     }
 
-
+    public getOnlineUsers(): string[] {
+        return Array.from(this.clientConnectionSocketIdMap.keys());
+    }
 }

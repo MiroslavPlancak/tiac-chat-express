@@ -1,1 +1,2 @@
-export * as utils from './conversation-utils';
+export * as ConUtils from './conversation-utils';
+
