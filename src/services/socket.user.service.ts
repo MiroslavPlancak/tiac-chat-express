@@ -19,7 +19,7 @@ export class SocketUserService {
         // Iterate over the map and send the notification to each user
         this._authService.clientConnectionSocketIdMap.forEach((socketId, connectedUserId) => {
             console.log(`Sending 'userHasComeOnlineResponse' to user ${connectedUserId} via socket ${socketId}.`);
-            this._ioServer.to(socketId).emit('userHasComeOnlineResponse', { userId });
+            this._ioServer.to(socketId).emit('userHasComeOnlineResponse',  userId);
         });
     }
 
@@ -29,7 +29,7 @@ export class SocketUserService {
         // Iterate over the map and send the notification to each user
         this._authService.clientConnectionSocketIdMap.forEach((socketId, connectedUserId) => {
             console.log(`Sending 'userHasWentOfflineResponse' to user ${connectedUserId} via socket ${socketId}.`);
-            this._ioServer.to(socketId).emit('userHasWentOfflineResponse', { userId });
+            this._ioServer.to(socketId).emit('userHasWentOfflineResponse',  userId );
         });
     }
 

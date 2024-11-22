@@ -50,7 +50,7 @@ export class SocketAuthService {
          * method to remove the user from the map of online 
          * users.
          */
-        socket.on('clientLoggedOut', () => {
+        socket.on('clientDeauthenticated', () => {
             this.removeUser(socket)
         })
         
