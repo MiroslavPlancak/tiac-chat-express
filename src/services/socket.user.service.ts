@@ -2,10 +2,12 @@ import * as socketIO from 'socket.io'
 import * as db from '../config/db'
 import * as models from '../models'
 import * as services from './socket.auth.service'
+import * as rxjs from 'rxjs'
 
 export class SocketUserService {
     private _ioServer: socketIO.Server
     private _authService: services.SocketAuthService
+    private _socketClosedCleanUp$ = new rxjs.Subject<void>()
 
     constructor(ioServer: socketIO.Server, authService: services.SocketAuthService) {
         this._ioServer = ioServer
@@ -62,6 +64,28 @@ export class SocketUserService {
             console.log(`userGoingOfflineListener`)
             this.notifyAllClientsOfUserGoingOffline(userId)
         })
+        //NOTE: This subject emits as many socket events as there are currently connected users (sockets)
+        //TODO: Implement a system that maps each connection socket to a different subject something along
+        //the lines of private userSubjects: Map<string, Subject<string>>(userId, Subject<string>). This way
+        //every user would have his own Subject emission and there would be no need for a shared one using foreach.
+        this._authService.userDisconnected$.pipe(rxjs.takeUntil(this._socketClosedCleanUp$)).subscribe((userId) => {
+            console.log(`Reactively handling disconnection of user: ${userId}`)
+            this._authService.clientConnectionSocketIdMap.forEach((socketId) => {
+                this._ioServer.to(socketId).emit('userHasWentOfflineResponse', userId)
+            })
+        })
+
+        this._authService.userConnected$.pipe(rxjs.takeUntil(this._socketClosedCleanUp$)).subscribe((userId)=>{
+            console.log(`Reactively handling connection of user: ${userId}`)
+            this._authService.clientConnectionSocketIdMap.forEach((socketId) => {
+                this._ioServer.to(socketId).emit('userHasComeOnlineResponse', userId)
+            })
+        })
+
+        socket.on('disconnect', () => {
+            this._socketClosedCleanUp$.next();
+            this._socketClosedCleanUp$.complete();
+        });
     }
 
 

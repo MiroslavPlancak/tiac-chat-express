@@ -1,7 +1,11 @@
 import * as socketIO from 'socket.io'
+import * as rxjs from 'rxjs'
 
 export class SocketAuthService {
+
     public clientConnectionSocketIdMap: Map<string, string>
+    public userDisconnected$ = new rxjs.Subject<string>()
+    public userConnected$ = new rxjs.Subject<string>()
 
     constructor() {
         this.clientConnectionSocketIdMap = new Map<string, string>()
@@ -10,6 +14,7 @@ export class SocketAuthService {
     // Handle user authentication and store userId with socket ID
     public authenticateUser(socketId: socketIO.Socket, userId: string) {
         this.clientConnectionSocketIdMap.set(userId, socketId.id)
+        this.userConnected$.next(userId)
         console.log(`Client authenticated: ${userId} with socket ID: ${socketId.id}`)
         console.log(`map at login:`, this.clientConnectionSocketIdMap)
     }
@@ -20,12 +25,12 @@ export class SocketAuthService {
     }
 
     // Remove user from the map when they disconnect
-    public removeUser(socket: socketIO.Socket, userId?:string) {
+    public removeUserFromMap(socket: socketIO.Socket, userId?:string) {
         for (let [userId, socketId] of this.clientConnectionSocketIdMap) {
             if (socketId === socket.id) {
                 this.clientConnectionSocketIdMap.delete(userId)
                 console.log(`User ${userId} removed from the map`)
-                
+                this.userDisconnected$.next(userId)
                 break
             }
         }
@@ -51,11 +56,11 @@ export class SocketAuthService {
          * users.
          */
         socket.on('clientDeauthenticated', () => {
-            this.removeUser(socket)
+            this.removeUserFromMap(socket)
         })
         
         socket.on('disconnect', () => {
-            this.removeUser(socket)
+            this.removeUserFromMap(socket)
         })
     }
 

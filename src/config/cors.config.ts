@@ -1,7 +1,12 @@
 // config/cors.config.ts
 import * as cors from 'cors'
 
-const allowedOrigins = ['http://localhost:4200', 'http://localhost:4201']
+const allowedOrigins = [
+  'http://localhost:4200',
+  'http://localhost:4201',
+  'http://localhost:4202',
+  'http://localhost:4203'
+]
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
