@@ -16,7 +16,7 @@ export class SocketUserService {
 
     //----------------------------------- NOTIFIER METHODS ---------------------------------------//
     notifyAllClientsOfUserComingOnline(userId: string) {
-        console.log(`Notifying all clients that user ${userId} is online.`)
+        // console.log(`Notifying all clients that user ${userId} is online.`)
 
         // Iterate over the map and send the notification to each user
         this._authService.clientConnectionSocketIdMap.forEach((socketId, connectedUserId) => {
@@ -26,11 +26,11 @@ export class SocketUserService {
     }
 
     notifyAllClientsOfUserGoingOffline(userId: string) {
-        console.log(`Notifying all clients that user ${userId} is offline.`)
+        // console.log(`Notifying all clients that user ${userId} is offline.`)
 
         // Iterate over the map and send the notification to each user
         this._authService.clientConnectionSocketIdMap.forEach((socketId, connectedUserId) => {
-            console.log(`Sending 'userHasWentOfflineResponse' to user ${connectedUserId} via socket ${socketId}.`)
+            // console.log(`Sending 'userHasWentOfflineResponse' to user ${connectedUserId} via socket ${socketId}.`)
             this._ioServer.to(socketId).emit('userHasWentOfflineResponse',  userId )
         })
     }
@@ -61,7 +61,7 @@ export class SocketUserService {
             this.notifyAllClientsOfUserComingOnline(userId)
         })
         socket.on('userHasWentOfflineRequest', (userId: models.User.id): void => {
-            console.log(`userGoingOfflineListener`)
+            // console.log(`userGoingOfflineListener`)
             this.notifyAllClientsOfUserGoingOffline(userId)
         })
         //NOTE: This subject emits as many socket events as there are currently connected users (sockets)
@@ -69,7 +69,7 @@ export class SocketUserService {
         //the lines of private userSubjects: Map<string, Subject<string>>(userId, Subject<string>). This way
         //every user would have his own Subject emission and there would be no need for a shared one using foreach.
         this._authService.userDisconnected$.pipe(rxjs.takeUntil(this._socketClosedCleanUp$)).subscribe((userId) => {
-            console.log(`Reactively handling disconnection of user: ${userId}`)
+            // console.log(`Reactively handling disconnection of user: ${userId}`)
             this._authService.clientConnectionSocketIdMap.forEach((socketId) => {
                 this._ioServer.to(socketId).emit('userHasWentOfflineResponse', userId)
             })
