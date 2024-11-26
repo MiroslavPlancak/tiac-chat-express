@@ -35,7 +35,7 @@ export class SocketMessageService {
       console.log('Message saved to database:', createdMessage)
 
       // Broadcast to other clients
-      this.ioServer.emit('receivedMessage', createdMessage)
+      this.ioServer.emit('receivedMessageResponse', createdMessage)
 
     } catch (error) {
       console.error('Error saving message to database:', error)
@@ -45,7 +45,7 @@ export class SocketMessageService {
 
     // This method will register the events to the socket.
     public registerMessageEvents(socket: socketIO.Socket): void {
-        socket.on('sendMessage', (message: models.Messages.FrontendMessage) => {
+        socket.on('sendMessageRequest', (message: models.Messages.FrontendMessage) => {
           this.sendMessage(message)
         });
       }

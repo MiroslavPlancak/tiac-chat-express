@@ -111,12 +111,12 @@ export const loginUser = async (req: express.Request, res: express.Response): Pr
         }
 
         // Generate a JWT token
-        const token = jwt.sign({ userId: UserId }, JWT_SECRET, { expiresIn: '1m' })
+        const token = jwt.sign({ userId: UserId }, JWT_SECRET, { expiresIn: '10m' })
         // Generate a Refresh Token
         const refreshToken = crypto.randomBytes(64).toString('hex')
         const expiration = new Date()
         
-        expiration.setMinutes(expiration.getMinutes() + 3) 
+        expiration.setMinutes(expiration.getMinutes() + 60) 
          // Remove milliseconds because javascript compares
          // time values on a mili-second level
          // for example: 14:00:00.500 is the same as 14:00:00
@@ -199,7 +199,7 @@ export const refreshToken = async (req: express.Request, res: express.Response):
             return
         }
 
-        const newAccessToken = jwt.sign({ userId: UserId }, JWT_SECRET, { expiresIn: '1m' })
+        const newAccessToken = jwt.sign({ userId: UserId }, JWT_SECRET, { expiresIn: '10m' })
         res.status(200).json({ accessToken: newAccessToken })
 
     } catch (err) {
